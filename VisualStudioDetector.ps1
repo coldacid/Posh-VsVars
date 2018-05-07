@@ -95,28 +95,29 @@ function Get-VsVersions
     [Microsoft.VisualStudio.Setup.Instance[]] $newinstallations = Get-VSSetupInstance -All
     $newversion = @{}
 
-    $newinstallations |
-    ForEach-Object -Process {
-        $version = $_.InstallationVersion
-        $path = $_.InstallationPath
+    if ($newinstallations) {
+        $newinstallations |
+        ForEach-Object -Process {
+            $version = $_.InstallationVersion
+            $path = $_.InstallationPath
 
-        if ($Managed) {
-            $BatchFile = Join-Path -Path $path -ChildPath "Common7" |
-                        Join-Path -ChildPath "Tools" |
-                        Join-Path -ChildPath "VsDevCmd.bat"
-        } else {
-            $BatchFile = Join-Path -Path $path -ChildPath "VC" |
-                        Join-Path -ChildPath "Auxiliary" |
-                        Join-Path -ChildPath "Build" |
-                        Join-Path -ChildPath "vcvarsall.bat"
+            if ($Managed) {
+                $BatchFile = Join-Path -Path $path -ChildPath "Common7" |
+                            Join-Path -ChildPath "Tools" |
+                            Join-Path -ChildPath "VsDevCmd.bat"
+            } else {
+                $BatchFile = Join-Path -Path $path -ChildPath "VC" |
+                            Join-Path -ChildPath "Auxiliary" |
+                            Join-Path -ChildPath "Build" |
+                            Join-Path -ChildPath "vcvarsall.bat"
+            }
+
+            if (Test-Path -Path $BatchFile -PathType Leaf) {
+                $newversion.Add($Version, $BatchFile)
+            } else {
+                Write-Warning -Message "Cannot find setup script for version $version in $BatchFile"
+            }
         }
-
-        if (Test-Path -Path $BatchFile -PathType Leaf) {
-            $newversion.Add($Version, $BatchFile)
-        } else {
-            Write-Warning -Message "Cannot find setup script for version $version in $BatchFile"
-        }
-
     }
 
     $version = $oldversion + $newversion
